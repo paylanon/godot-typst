@@ -12,3 +12,4 @@ crate-type = ["lib"]
 [dependencies]
 # godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api"] }
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api", "custom-godot"] }
+tempfile = "3.8.1"
