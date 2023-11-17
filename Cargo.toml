@@ -7,7 +7,7 @@ edition = "2021"
 
 [lib]
 name = "_godotypst"
-crate-type = ["cdylib"]
+crate-type = ["lib"]
 
 [dependencies]
 # godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api"] }
