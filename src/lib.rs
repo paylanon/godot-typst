@@ -65,12 +65,19 @@ impl Typst {
             return;
         }
 
-        // Define the destination path
-        let godot_res_path = "res://temp/output.svg";
-
-        // Move the .svg file to the Godot resource path
+        // Read the SVG content from the temporary file
         let temp_svg_path = dir.path().join("expression.svg");
-        fs::rename(&temp_svg_path, godot_res_path)
-            .expect("Failed to move SVG file to Godot resource path");
+        let mut temp_svg_file = File::open(&temp_svg_path)
+            .expect("Failed to open temporary SVG file");
+        let mut svg_content = String::new();
+        temp_svg_file.read_to_string(&mut svg_content)
+            .expect("Failed to read SVG content");
+
+        // Write the SVG content to a new file in the Godot resource directory
+        let godot_res_path = "res://temp/output.svg";
+        let mut godot_res_file = File::create(godot_res_path)
+            .expect("Failed to create file in Godot resource path");
+        godot_res_file.write_all(svg_content.as_bytes())
+            .expect("Failed to write SVG content to Godot resource file");
     }
 }
