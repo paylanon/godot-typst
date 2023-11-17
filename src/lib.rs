@@ -74,7 +74,7 @@ impl Typst {
             .expect("Failed to read SVG content");
 
         // Write the SVG content to a new file in the Godot resource directory
-        let godot_res_path = "res://temp/output.svg";
+        let godot_res_path = "temp/output.svg";
         let mut godot_res_file = File::create(godot_res_path)
             .expect("Failed to create file in Godot resource path");
         godot_res_file.write_all(svg_content.as_bytes())
