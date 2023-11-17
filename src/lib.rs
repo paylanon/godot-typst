@@ -50,14 +50,12 @@ impl Typst {
             .expect("Failed to write to .typst file");
 
         // Step 2: Execute 'typst compile'
-        let output_path = dir.path().join("output.svg");
+        // let output_path = dir.path().join("output.svg");
         let status = Command::new("typst")
             .arg("compile")
             .arg(&file_path)
             .arg("--format")
             .arg("svg")
-            .arg("--output")
-            .arg(&output_path)
             .status()
             .expect("Failed to execute typst command");
 
@@ -66,7 +64,7 @@ impl Typst {
             return;
         }
 
-        // At this point, 'output.svg' contains the compiled SVG.
+        // At this point, 'expression.svg' contains the compiled SVG.
         // You can proceed to load this as a Godot Texture.
     }
 }
