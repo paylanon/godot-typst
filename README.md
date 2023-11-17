@@ -10,6 +10,7 @@
 
 ## ABOUT
 WIP
+
 Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX)
 
 ## INSTALLATION
