@@ -2,7 +2,7 @@
 <img src="https://github.com/paylhorse/godot-typst/assets/74363924/61433620-8126-46a4-8deb-39c7eac1c5f1" alt="logo" width="200"/>
 </p>
 <p align="center">
-<b>Render Typst expressions in Godot 4</b>
+<b>Render Typst expressions in <a href="https://github.com/godotengine/godot">Godot 4</a></b>
 </p>
 <p align="center">
 <b>Requires <a href="https://github.com/godot-rust/gdext">godot-rust</a></b>
