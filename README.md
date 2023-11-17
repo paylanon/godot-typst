@@ -14,7 +14,7 @@ WIP
 Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX)
 
 ## INSTALLATION
-(1) Add this crate a dependency to your godot-rust project. 
+(1) Add this crate as a dependency to your godot-rust project. 
 
 **Cargo.toml:**
 
