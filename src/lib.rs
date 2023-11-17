@@ -64,7 +64,12 @@ impl Typst {
             return;
         }
 
-        // At this point, 'expression.svg' contains the compiled SVG.
-        // You can proceed to load this as a Godot Texture.
+        // Define the destination path
+        let godot_res_path = "res://temp/output.svg";
+
+        // Move the .svg file to the Godot resource path
+        let temp_svg_path = dir.path().join("expression.svg");
+        fs::rename(&temp_svg_path, godot_res_path)
+            .expect("Failed to move SVG file to Godot resource path");
     }
 }
