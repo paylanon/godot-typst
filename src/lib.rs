@@ -5,7 +5,7 @@
 //
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::process::Command;
 use std::env;
 use godot::prelude::*;
