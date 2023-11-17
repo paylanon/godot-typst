@@ -18,7 +18,7 @@ Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX)
 
 ```toml
 [dependencies]
-godot-typst = { git = "https://github.com/PAYLHORSE-Software/godot-typst" }
+godot-typst = { git = "https://github.com/paylhorse/godot-typst" }
 ```
 (2) Import the Typst class to automatically add it to Godot. Ignore warning.
 
