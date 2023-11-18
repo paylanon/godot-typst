@@ -19,6 +19,8 @@ pub struct Typst {
     pub node: Base<Sprite2D>,
     #[export(multiline)]
     pub typst_expression: GString,
+    pub time_accumulator: f32,
+    pub stored_expr: GString,
 }
 
 #[godot_api]
@@ -27,6 +29,8 @@ impl ISprite2D for Typst {
         Typst { 
             node,
             typst_expression: String::new().into(),
+            time_accumulator: 0.0,
+            stored_expr: String::new().into(),
         }
     }
 
@@ -36,65 +40,75 @@ impl ISprite2D for Typst {
 
     fn process(&mut self, delta: f64) {
         // Periodically re-render
+        // self.time_accumulator += delta as f32;
+        // if self.time_accumulator >= 300.0 {
+        //     self.render();
+        //     self.time_accumulator = 0.0;
+        // }
+        // Instant re-render
+        self.render();
     }
 }
 
 #[godot_api]
 impl Typst {
     pub fn render(&mut self) {
-        // Render Typst: convert latex expression to SVG, then assign to self
-        // Step 1: Create a temporary .typst file
-        let dir = tempdir().expect("Failed to create temporary directory");
-        let file_path = dir.path().join("expression.typst");
-        let mut file = File::create(&file_path)
-            .expect("Failed to create .typst file");
-        writeln!(file, "{}", self.typst_expression)
-            .expect("Failed to write to .typst file");
-        // Step 2: Execute 'typst compile'
-        // let output_path = dir.path().join("output.svg");
-        let status = Command::new("typst")
-            .arg("compile")
-            .arg(&file_path)
-            .arg("--format")
-            .arg("svg")
-            .status()
-            .expect("Failed to execute typst command");
-        if !status.success() {
-            eprintln!("Error: Typst command failed");
-            return;
+        if self.typst_expression != self.stored_expr {
+            // Render Typst: convert latex expression to SVG, then assign to self
+            // Step 1: Create a temporary .typst file
+            let dir = tempdir().expect("Failed to create temporary directory");
+            let file_path = dir.path().join("expression.typst");
+            let mut file = File::create(&file_path)
+                .expect("Failed to create .typst file");
+            writeln!(file, "{}", self.typst_expression)
+                .expect("Failed to write to .typst file");
+            // Step 2: Execute 'typst compile'
+            // let output_path = dir.path().join("output.svg");
+            let status = Command::new("typst")
+                .arg("compile")
+                .arg(&file_path)
+                .arg("--format")
+                .arg("svg")
+                .status()
+                .expect("Failed to execute typst command");
+            if !status.success() {
+                eprintln!("Error: Typst command failed");
+                return;
+            }
+            // Read the SVG content from the temporary file
+            let temp_svg_path = dir.path().join("expression.svg");
+            let mut temp_svg_file = File::open(&temp_svg_path)
+                .expect("Failed to open temporary SVG file");
+            let mut svg_content = String::new();
+            temp_svg_file.read_to_string(&mut svg_content)
+                .expect("Failed to read SVG content");
+            // -- RESVG --
+            // Parse the SVG
+            let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
+            let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
+            godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
+            godot_print!("RESVG bb: {:?}", resvg_tree.content_area);
+            // 595, 842
+            let scale_factor = 1.0;
+            let pw: u32 = 595;
+            let ph: u32 = 842;
+            // Create a mutable pixmap buffer
+            let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
+            let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
+                .expect("Failed to create pixmap");
+            // Render the SVG onto the pixmap
+            resvg_tree.render(tiny_skia::Transform::from_scale(scale_factor, scale_factor), &mut pixmap);
+            // Now `pixmap_data` contains your rendered image
+            // Convert this data to a PNG buffer
+            let png_buffer = self.convert_rgba_to_png(&pixmap_data, pw, ph);
+            // Feed to Godot
+            let mut typst_image = Image::new();
+            typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
+            let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
+            // svg_texture.update();
+            self.node.set_texture(typst_texture.upcast());
+            self.stored_expr = self.typst_expression.clone();
         }
-        // Read the SVG content from the temporary file
-        let temp_svg_path = dir.path().join("expression.svg");
-        let mut temp_svg_file = File::open(&temp_svg_path)
-            .expect("Failed to open temporary SVG file");
-        let mut svg_content = String::new();
-        temp_svg_file.read_to_string(&mut svg_content)
-            .expect("Failed to read SVG content");
-        // -- RESVG --
-        // Parse the SVG
-        let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
-        let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
-        godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
-        godot_print!("RESVG bb: {:?}", resvg_tree.content_area);
-        // 595, 842
-        let scale_factor = 1.0;
-        let pw: u32 = 595;
-        let ph: u32 = 842;
-        // Create a mutable pixmap buffer
-        let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
-        let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
-            .expect("Failed to create pixmap");
-        // Render the SVG onto the pixmap
-        resvg_tree.render(tiny_skia::Transform::from_scale(scale_factor, scale_factor), &mut pixmap);
-        // Now `pixmap_data` contains your rendered image
-        // Convert this data to a PNG buffer
-        let png_buffer = self.convert_rgba_to_png(&pixmap_data, pw, ph);
-        // Feed to Godot
-        let mut typst_image = Image::new();
-        typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
-        let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
-        // svg_texture.update();
-        self.node.set_texture(typst_texture.upcast());
     }
 
     fn convert_rgba_to_png(&self, data: &[u8], width: u32, height: u32) -> Vec<u8> {
