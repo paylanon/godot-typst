@@ -4,13 +4,13 @@
 //  YboodP  YbodP  8888Y"   YbodP    88              88    dP    88     8bodP'   88   
 //
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{Read, Write, Cursor};
 use std::process::Command;
 use godot::prelude::*;
-use godot::engine::{Sprite2D, ISprite2D, Texture2D, Image, ImageTexture};
-use godot::engine::FileAccess;
-use godot::engine::file_access::ModeFlags;
+use godot::engine::{Sprite2D, ISprite2D, Image, ImageTexture};
+use usvg::TreeParsing;
 use tempfile::tempdir;
+use image::{RgbaImage, ImageBuffer, ImageOutputFormat};
 
 #[derive(GodotClass)]
 #[class(base = Sprite2D)]
@@ -70,22 +70,34 @@ impl Typst {
         let mut svg_content = String::new();
         temp_svg_file.read_to_string(&mut svg_content)
             .expect("Failed to read SVG content");
-        // // Path to store the SVG in Godot's resource path
-        // let godot_res_path = GString::from("res://output.svg");
-        // // Open the file in write mode
-        // if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
-        //     // Write the SVG content
-        //     file.store_string(GString::from(svg_content));
-        //     file.flush();
-        //     file.close();
-        //     godot_print!("SVG ready!");
-        // } else {
-        //     godot_error!("Failed to open file in Godot resource path");
-        // }
-        let mut svg_image = Image::new();
-        svg_image.load_svg_from_string(GString::from(svg_content));
-        let svg_texture = ImageTexture::create_from_image(svg_image).expect("Failed to create ImageTexture!");
+        // -- RESVG --
+        // Parse the SVG
+        let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
+        let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
+        // 595, 842
+        let pw: u32 = 595;
+        let ph: u32 = 842;
+        // Create a mutable pixmap buffer
+        let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
+        let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
+            .expect("Failed to create pixmap");
+        // Render the SVG onto the pixmap
+        resvg_tree.render(tiny_skia::Transform::identity(), &mut pixmap);
+        // Now `pixmap_data` contains your rendered image
+        // Convert this data to a PNG buffer
+        let png_buffer = self.convert_rgba_to_png(&pixmap_data, pw, ph);
+        // Feed to Godot
+        let mut typst_image = Image::new();
+        typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
+        let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
         // svg_texture.update();
-        self.node.set_texture(svg_texture.upcast());
+        self.node.set_texture(typst_texture.upcast());
+    }
+
+    fn convert_rgba_to_png(&self, data: &[u8], width: u32, height: u32) -> Vec<u8> {
+        let img: RgbaImage = ImageBuffer::from_raw(width, height, data.to_vec()).unwrap();
+        let mut buffer = Cursor::new(Vec::new());
+        img.write_to(&mut buffer, ImageOutputFormat::Png).unwrap();
+        buffer.into_inner()
     }
 }
