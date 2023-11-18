@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::process::Command;
 use godot::prelude::*;
-use godot::engine::{Sprite2D, ISprite2D};
+use godot::engine::{Sprite2D, ISprite2D, Texture};
 use godot::engine::FileAccess;
 use godot::engine::file_access::ModeFlags;
 use tempfile::tempdir;
@@ -71,7 +71,7 @@ impl Typst {
         temp_svg_file.read_to_string(&mut svg_content)
             .expect("Failed to read SVG content");
         // Path to store the SVG in Godot's resource path
-        let godot_res_path = GString::from("res://temp/output.svg");
+        let godot_res_path = GString::from("res://output.svg");
         // Open the file in write mode
         if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
             // Write the SVG content
@@ -82,5 +82,7 @@ impl Typst {
         } else {
             godot_error!("Failed to open file in Godot resource path");
         }
+        let svg_texture = load::<Texture2D>("res://output.svg");
+        self.node.set_texture(svg_texture);
     }
 }
