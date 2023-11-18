@@ -74,6 +74,8 @@ impl Typst {
         // Parse the SVG
         let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
         let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
+        godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
+        godot_print!("RESVG bb: {:?}", resvg_tree.content_area);
         // 595, 842
         let pw: u32 = 5950;
         let ph: u32 = 8420;
