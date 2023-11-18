@@ -13,7 +13,7 @@ use tempfile::tempdir;
 use image::{RgbaImage, ImageBuffer, ImageOutputFormat};
 
 #[derive(GodotClass)]
-#[class(base = Sprite2D)]
+#[class(base = Sprite2D, tool)]
 pub struct Typst {
     #[base]
     pub node: Base<Sprite2D>,
