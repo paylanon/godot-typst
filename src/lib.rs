@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::process::Command;
 use godot::prelude::*;
-use godot::engine::{Sprite2D, ISprite2D, Texture2D};
+use godot::engine::{Sprite2D, ISprite2D, Texture2D, Image, ImageTexture};
 use godot::engine::FileAccess;
 use godot::engine::file_access::ModeFlags;
 use tempfile::tempdir;
@@ -70,19 +70,22 @@ impl Typst {
         let mut svg_content = String::new();
         temp_svg_file.read_to_string(&mut svg_content)
             .expect("Failed to read SVG content");
-        // Path to store the SVG in Godot's resource path
-        let godot_res_path = GString::from("res://output.svg");
-        // Open the file in write mode
-        if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
-            // Write the SVG content
-            file.store_string(GString::from(svg_content));
-            file.flush();
-            file.close();
-            godot_print!("SVG ready!");
-        } else {
-            godot_error!("Failed to open file in Godot resource path");
-        }
-        let svg_texture = load::<Texture2D>("res://output.svg");
-        self.node.set_texture(svg_texture);
+        // // Path to store the SVG in Godot's resource path
+        // let godot_res_path = GString::from("res://output.svg");
+        // // Open the file in write mode
+        // if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
+        //     // Write the SVG content
+        //     file.store_string(GString::from(svg_content));
+        //     file.flush();
+        //     file.close();
+        //     godot_print!("SVG ready!");
+        // } else {
+        //     godot_error!("Failed to open file in Godot resource path");
+        // }
+        let mut svg_image = Image::new();
+        svg_image.load_svg_from_string(GString::from(svg_content));
+        let svg_texture = ImageTexture::create_from_image(svg_image).expect("Failed to create ImageTexture!");
+        // svg_texture.update();
+        self.node.set_texture(svg_texture.upcast());
     }
 }
