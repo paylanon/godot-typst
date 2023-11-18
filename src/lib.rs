@@ -75,8 +75,8 @@ impl Typst {
         let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
         let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
         // 595, 842
-        let pw: u32 = 595;
-        let ph: u32 = 842;
+        let pw: u32 = 5950;
+        let ph: u32 = 8420;
         // Create a mutable pixmap buffer
         let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
         let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
