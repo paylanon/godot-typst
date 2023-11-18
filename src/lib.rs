@@ -77,9 +77,9 @@ impl Typst {
         godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
         godot_print!("RESVG bb: {:?}", resvg_tree.content_area);
         // 595, 842
-        let scale_factor = 10.0;
-        let pw: u32 = 5950;
-        let ph: u32 = 8420;
+        let scale_factor = 1.0;
+        let pw: u32 = 595;
+        let ph: u32 = 842;
         // Create a mutable pixmap buffer
         let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
         let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
