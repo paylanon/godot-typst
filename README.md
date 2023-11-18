@@ -9,7 +9,7 @@
 </p>
 
 ## ABOUT
-WIP
+WORK IN PROGRESS
 
 Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX)
 
