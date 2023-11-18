@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::process::Command;
 use godot::prelude::*;
-use godot::engine::{Sprite2D, ISprite2D, Texture};
+use godot::engine::{Sprite2D, ISprite2D, Texture2D};
 use godot::engine::FileAccess;
 use godot::engine::file_access::ModeFlags;
 use tempfile::tempdir;
