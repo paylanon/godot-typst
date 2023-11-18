@@ -77,6 +77,7 @@ impl Typst {
         godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
         godot_print!("RESVG bb: {:?}", resvg_tree.content_area);
         // 595, 842
+        let scale_factor = 10.0;
         let pw: u32 = 5950;
         let ph: u32 = 8420;
         // Create a mutable pixmap buffer
@@ -84,7 +85,7 @@ impl Typst {
         let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
             .expect("Failed to create pixmap");
         // Render the SVG onto the pixmap
-        resvg_tree.render(tiny_skia::Transform::from_scale(10.0, 10.0), &mut pixmap);
+        resvg_tree.render(tiny_skia::Transform::from_scale(scale_factor, scale_factor), &mut pixmap);
         // Now `pixmap_data` contains your rendered image
         // Convert this data to a PNG buffer
         let png_buffer = self.convert_rgba_to_png(&pixmap_data, pw, ph);
