@@ -27,7 +27,7 @@ godot-typst = { git = "https://github.com/paylhorse/godot-typst" }
 **lib.rs:**
 
 ```rs
-use _godotypst::Typst;
+use godot_typst::Typst;
 ```
 
 Locked and loaded!
