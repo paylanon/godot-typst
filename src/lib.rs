@@ -17,7 +17,7 @@ use image::{RgbaImage, ImageBuffer, ImageOutputFormat};
 pub struct Typst {
     #[base]
     pub node: Base<Sprite2D>,
-    #[export]
+    #[export(multiline)]
     pub typst_expression: GString,
 }
 
