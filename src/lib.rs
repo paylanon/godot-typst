@@ -70,22 +70,20 @@ impl Typst {
         let mut svg_content = String::new();
         temp_svg_file.read_to_string(&mut svg_content)
             .expect("Failed to read SVG content");
-        // // Path to store the SVG in Godot's resource path
-        // let godot_res_path = GString::from("res://output.svg");
-        // // Open the file in write mode
-        // if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
-        //     // Write the SVG content
-        //     file.store_string(GString::from(svg_content));
-        //     file.flush();
-        //     file.close();
-        //     godot_print!("SVG ready!");
-        // } else {
-        //     godot_error!("Failed to open file in Godot resource path");
-        // }
-        let mut svg_image = Image::new();
-        svg_image.load_svg_from_string(GString::from(svg_content));
+        // Path to store the SVG in Godot's resource path
+        let godot_res_path = GString::from("res://output.svg");
+        // Open the file in write mode
+        if let Some(mut file) = FileAccess::open(godot_res_path.clone(), ModeFlags::WRITE) {
+            // Write the SVG content
+            file.store_string(GString::from(svg_content));
+            file.flush();
+            file.close();
+            godot_print!("SVG ready!");
+        } else {
+            godot_error!("Failed to open file in Godot resource path");
+        }
+        let svg_image = Image::load_from_file(godot_res_path.into()).expect("Failed to load image!");
         let svg_texture = ImageTexture::create_from_image(svg_image).expect("Failed to create ImageTexture!");
-        // svg_texture.update();
         self.node.set_texture(svg_texture.upcast());
     }
 }
