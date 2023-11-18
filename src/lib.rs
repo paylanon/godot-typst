@@ -3,13 +3,13 @@
 // Yb  "88 Yb   dP  8I  dY Yb   dP   88   """"""""   88     8P   88"""  o.`Y8b   88   
 //  YboodP  YbodP  8888Y"   YbodP    88              88    dP    88     8bodP'   88   
 //
-use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::process::Command;
-use std::env;
 use godot::prelude::*;
 use godot::engine::{Sprite2D, ISprite2D};
+use godot::engine::FileAccess;
+use godot::engine::file_access::ModeFlags;
 use tempfile::tempdir;
 
 #[derive(GodotClass)]
@@ -34,7 +34,9 @@ impl ISprite2D for Typst {
         self.render();
     }
 
-    fn process(&mut self, delta: f64) {}
+    fn process(&mut self, delta: f64) {
+        // Periodically re-render
+    }
 }
 
 #[godot_api]
@@ -46,10 +48,8 @@ impl Typst {
         let file_path = dir.path().join("expression.typst");
         let mut file = File::create(&file_path)
             .expect("Failed to create .typst file");
-
         writeln!(file, "{}", self.typst_expression)
             .expect("Failed to write to .typst file");
-
         // Step 2: Execute 'typst compile'
         // let output_path = dir.path().join("output.svg");
         let status = Command::new("typst")
@@ -59,12 +59,10 @@ impl Typst {
             .arg("svg")
             .status()
             .expect("Failed to execute typst command");
-
         if !status.success() {
             eprintln!("Error: Typst command failed");
             return;
         }
-
         // Read the SVG content from the temporary file
         let temp_svg_path = dir.path().join("expression.svg");
         let mut temp_svg_file = File::open(&temp_svg_path)
@@ -72,12 +70,17 @@ impl Typst {
         let mut svg_content = String::new();
         temp_svg_file.read_to_string(&mut svg_content)
             .expect("Failed to read SVG content");
-
-        // Write the SVG content to a new file in the Godot resource directory
-        let godot_res_path = "temp/output.svg";
-        let mut godot_res_file = File::create(godot_res_path)
-            .expect("Failed to create file in Godot resource path");
-        godot_res_file.write_all(svg_content.as_bytes())
-            .expect("Failed to write SVG content to Godot resource file");
+        // Path to store the SVG in Godot's resource path
+        let godot_res_path = GString::from("res://temp/output.svg");
+        // Open the file in write mode
+        if let Some(mut file) = FileAccess::open(godot_res_path, ModeFlags::WRITE) {
+            // Write the SVG content
+            file.store_string(GString::from(svg_content));
+            file.flush();
+            file.close();
+            godot_print!("SVG ready!");
+        } else {
+            godot_error!("Failed to open file in Godot resource path");
+        }
     }
 }
