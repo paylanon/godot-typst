@@ -5,6 +5,8 @@
 //
 use std::fs::File;
 use std::io::{Read, Write, Cursor};
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::process::Command;
 use godot::prelude::*;
 use godot::engine::{Sprite2D, ISprite2D, Image, ImageTexture};
@@ -19,8 +21,8 @@ pub struct Typst {
     pub node: Base<Sprite2D>,
     #[export(multiline)]
     pub typst_expression: GString,
-    pub time_accumulator: f32,
     pub stored_expr: GString,
+    pub shared_queue: Arc<Mutex<Vec<Vec<u8>>>>,
 }
 
 #[godot_api]
@@ -29,38 +31,47 @@ impl ISprite2D for Typst {
         Typst { 
             node,
             typst_expression: String::new().into(),
-            time_accumulator: 0.0,
             stored_expr: String::new().into(),
+            shared_queue: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
     fn ready(&mut self) {
-        self.render();
+        self.bake_svg();
     }
 
     fn process(&mut self, delta: f64) {
-        // Periodically re-render
-        // self.time_accumulator += delta as f32;
-        // if self.time_accumulator >= 300.0 {
-        //     self.render();
-        //     self.time_accumulator = 0.0;
-        // }
-        // Instant re-render
-        self.render();
+        if self.typst_expression != self.stored_expr {
+            self.bake_svg();
+        }
+        let mut queue = self.shared_queue.lock().unwrap();
+        if let Some(png_buffer) = queue.pop() {
+            // Update the node with the new texture
+            let mut typst_image = Image::new();
+            typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
+            let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
+            // svg_texture.update();
+            self.node.set_texture(typst_texture.upcast());
+            self.stored_expr = self.typst_expression.clone();
+        }
     }
 }
 
 #[godot_api]
 impl Typst {
-    pub fn render(&mut self) {
-        if self.typst_expression != self.stored_expr {
+    pub fn bake_svg(&mut self) {
+        // MULTI-THREAD
+        let expression = self.typst_expression.clone().to_string();
+        let queue_clone = Arc::clone(&self.shared_queue);
+        thread::spawn(move || {
+            godot_print!("Started Typst Render");
             // Render Typst: convert latex expression to SVG, then assign to self
             // Step 1: Create a temporary .typst file
             let dir = tempdir().expect("Failed to create temporary directory");
             let file_path = dir.path().join("expression.typst");
             let mut file = File::create(&file_path)
                 .expect("Failed to create .typst file");
-            writeln!(file, "{}", self.typst_expression)
+            writeln!(file, "{}", expression)
                 .expect("Failed to write to .typst file");
             // Step 2: Execute 'typst compile'
             // let output_path = dir.path().join("output.svg");
@@ -100,21 +111,16 @@ impl Typst {
             resvg_tree.render(tiny_skia::Transform::from_scale(scale_factor, scale_factor), &mut pixmap);
             // Now `pixmap_data` contains your rendered image
             // Convert this data to a PNG buffer
-            let png_buffer = self.convert_rgba_to_png(&pixmap_data, pw, ph);
-            // Feed to Godot
-            let mut typst_image = Image::new();
-            typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
-            let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
-            // svg_texture.update();
-            self.node.set_texture(typst_texture.upcast());
-            self.stored_expr = self.typst_expression.clone();
-        }
+            let convert_rgba_to_png = |pixmap_data: &[u8], pw: u32, ph: u32| -> Vec<u8> {
+                let img: RgbaImage = ImageBuffer::from_raw(pw, ph, pixmap_data.to_vec()).unwrap();
+                let mut buffer = Cursor::new(Vec::new());
+                img.write_to(&mut buffer, ImageOutputFormat::Png).unwrap();
+                buffer.into_inner()
+            };
+            let png_buffer = convert_rgba_to_png(&pixmap_data, pw, ph);
+            let mut queue = queue_clone.lock().unwrap();
+            queue.push(png_buffer);
+        });
     }
 
-    fn convert_rgba_to_png(&self, data: &[u8], width: u32, height: u32) -> Vec<u8> {
-        let img: RgbaImage = ImageBuffer::from_raw(width, height, data.to_vec()).unwrap();
-        let mut buffer = Cursor::new(Vec::new());
-        img.write_to(&mut buffer, ImageOutputFormat::Png).unwrap();
-        buffer.into_inner()
-    }
 }
