@@ -50,13 +50,14 @@ impl ISprite2D for Typst {
         }
         if self.is_job_active {
             self.time_accumulator += delta as f32;
-            if self.time_accumulator >= 240.0 {
+            if self.time_accumulator >= 4.0 {
                 self.bake_png();
                 self.is_job_active = false;
             }
         }
         let mut queue = self.shared_queue.lock().unwrap();
         if let Some(png_buffer) = queue.pop() {
+            godot_print!("Updating Typst node...");
             // Update the node with the new texture
             let mut typst_image = Image::new();
             typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
@@ -136,5 +137,4 @@ impl Typst {
             queue.push(png_buffer);
         });
     }
-
 }
