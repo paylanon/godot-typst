@@ -64,7 +64,6 @@ impl ISprite2D for Typst {
             let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
             // svg_texture.update();
             self.node.set_texture(typst_texture.upcast());
-            self.stored_expr = self.typst_expression.clone();
         }
     }
 }
@@ -74,6 +73,7 @@ impl Typst {
     pub fn start_job(&mut self) {
         self.is_job_active = true;
         self.time_accumulator = 0.0;
+        self.stored_expr = self.typst_expression.clone();
     }
     pub fn bake_png(&mut self) {
         // MULTI-THREAD
