@@ -23,6 +23,8 @@ pub struct Typst {
     pub typst_expression: GString,
     pub stored_expr: GString,
     pub shared_queue: Arc<Mutex<Vec<Vec<u8>>>>,
+    pub time_accumulator: f32,
+    pub is_job_active: bool,
 }
 
 #[godot_api]
@@ -33,16 +35,25 @@ impl ISprite2D for Typst {
             typst_expression: String::new().into(),
             stored_expr: String::new().into(),
             shared_queue: Arc::new(Mutex::new(Vec::new())),
+            time_accumulator: 0.0,
+            is_job_active: false,
         }
     }
 
     fn ready(&mut self) {
-        self.bake_svg();
+        self.bake_png();
     }
 
     fn process(&mut self, delta: f64) {
         if self.typst_expression != self.stored_expr {
-            self.bake_svg();
+            self.start_job();
+        }
+        if self.is_job_active {
+            self.time_accumulator += delta as f32;
+            if self.time_accumulator >= 240.0 {
+                self.bake_png();
+                self.is_job_active = false;
+            }
         }
         let mut queue = self.shared_queue.lock().unwrap();
         if let Some(png_buffer) = queue.pop() {
@@ -59,7 +70,11 @@ impl ISprite2D for Typst {
 
 #[godot_api]
 impl Typst {
-    pub fn bake_svg(&mut self) {
+    pub fn start_job(&mut self) {
+        self.is_job_active = true;
+        self.time_accumulator = 0.0;
+    }
+    pub fn bake_png(&mut self) {
         // MULTI-THREAD
         let expression = self.typst_expression.clone().to_string();
         let queue_clone = Arc::clone(&self.shared_queue);

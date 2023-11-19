@@ -372,7 +372,7 @@ dependencies = [
 [[package]]
 name = "godot-typst"
 version = "0.1.0"
-source = "git+https://github.com/paylhorse/godot-typst#840cd87109f271cef1223cb49e01d2bb85d569d4"
+source = "git+https://github.com/paylhorse/godot-typst#b838aa9c19499db8129ad0713852a2c7acda74f3"
 dependencies = [
  "godot",
  "image",
