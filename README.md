@@ -9,7 +9,7 @@
 </p>
 
 ## ABOUT
-WIP
+WORK IN PROGRESS
 
 Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX)
 
@@ -27,7 +27,7 @@ godot-typst = { git = "https://github.com/paylhorse/godot-typst" }
 **lib.rs:**
 
 ```rs
-use _godotypst::Typst;
+use godot_typst::Typst;
 ```
 
 Locked and loaded!
