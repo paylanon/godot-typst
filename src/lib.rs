@@ -12,7 +12,7 @@ use godot::prelude::*;
 use godot::engine::{Sprite2D, ISprite2D, Image, ImageTexture};
 use usvg::TreeParsing;
 use tempfile::tempdir;
-use image::{RgbaImage, ImageBuffer, ImageOutputFormat};
+use image::{DynamicImage, RgbaImage, ImageBuffer, ImageOutputFormat};
 
 #[derive(GodotClass)]
 #[class(base = Sprite2D, tool)]
@@ -58,7 +58,7 @@ impl ISprite2D for Typst {
         let mut queue = self.shared_queue.lock().unwrap();
         if let Some(png_buffer) = queue.pop() {
             godot_print!("Updating Typst node...");
-            // Update the node with the new texture
+            // Update node with new texture
             let mut typst_image = Image::new();
             typst_image.load_png_from_buffer(PackedByteArray::from(png_buffer.as_slice()));
             let typst_texture = ImageTexture::create_from_image(typst_image).expect("Failed to create ImageTexture!");
@@ -80,16 +80,14 @@ impl Typst {
         let expression = self.typst_expression.clone().to_string();
         let queue_clone = Arc::clone(&self.shared_queue);
         thread::spawn(move || {
-            // Render Typst: convert latex expression to SVG, then assign to self
-            // Step 1: Create a temporary .typst file
+            // Create a temporary .typst file
             let dir = tempdir().expect("Failed to create temporary directory");
             let file_path = dir.path().join("expression.typst");
             let mut file = File::create(&file_path)
                 .expect("Failed to create .typst file");
             writeln!(file, "{}", expression)
                 .expect("Failed to write to .typst file");
-            // Step 2: Execute 'typst compile'
-            // let output_path = dir.path().join("output.svg");
+            // Execute 'typst compile'
             let status = Command::new("typst")
                 .arg("compile")
                 .arg(&file_path)
@@ -101,7 +99,7 @@ impl Typst {
                 eprintln!("Error: Typst command failed");
                 return;
             }
-            // Read the SVG content from the temporary file
+            // Read SVG content from temporary file
             let temp_svg_path = dir.path().join("expression.svg");
             let mut temp_svg_file = File::open(&temp_svg_path)
                 .expect("Failed to open temporary SVG file");
@@ -109,7 +107,7 @@ impl Typst {
             temp_svg_file.read_to_string(&mut svg_content)
                 .expect("Failed to read SVG content");
             // -- RESVG --
-            // Parse the SVG
+            // Parse SVG
             let usvg_tree = usvg::Tree::from_str(&svg_content, &usvg::Options::default()).expect("Failed to parse SVG string!");
             let resvg_tree = resvg::Tree::from_usvg(&usvg_tree);
             // godot_print!("RESVG vb: {:?}", resvg_tree.view_box);
@@ -118,18 +116,28 @@ impl Typst {
             let scale_factor = 1.0;
             let pw: u32 = 595;
             let ph: u32 = 842;
-            // Create a mutable pixmap buffer
+            // Create mutable pixmap buffer
             let mut pixmap_data = vec![0; pw as usize * ph as usize * 4]; // 4 bytes per pixel (RGBA)
             let mut pixmap = tiny_skia::PixmapMut::from_bytes(&mut pixmap_data, pw, ph)
                 .expect("Failed to create pixmap");
-            // Render the SVG onto the pixmap
+            // Render SVG onto pixmap
             resvg_tree.render(tiny_skia::Transform::from_scale(scale_factor, scale_factor), &mut pixmap);
-            // Now `pixmap_data` contains your rendered image
-            // Convert this data to a PNG buffer
+            // Convert to a PNG buffer
             let convert_rgba_to_png = |pixmap_data: &[u8], pw: u32, ph: u32| -> Vec<u8> {
                 let img: RgbaImage = ImageBuffer::from_raw(pw, ph, pixmap_data.to_vec()).unwrap();
+                let dynamic_img = DynamicImage::ImageRgba8(img);
+                // Crop png to content area
+                let cropped_img = if let Some(content_area) = resvg_tree.content_area {
+                    let cx = (content_area.x() * scale_factor) as u32;
+                    let cy = (content_area.y() * scale_factor) as u32; 
+                    let cw = (content_area.width() * scale_factor) as u32;
+                    let ch = (content_area.height() * scale_factor) as u32;
+                    dynamic_img.crop_imm(cx, cy, cw, ch)
+                } else {
+                    dynamic_img
+                };
                 let mut buffer = Cursor::new(Vec::new());
-                img.write_to(&mut buffer, ImageOutputFormat::Png).unwrap();
+                cropped_img.write_to(&mut buffer, ImageOutputFormat::Png).unwrap();
                 buffer.into_inner()
             };
             let png_buffer = convert_rgba_to_png(&pixmap_data, pw, ph);

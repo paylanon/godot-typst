@@ -1,12 +1,12 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1700437989
+::res://::1700459920
 extension_list.cfg::TextFile::-1::1700291091::0::1::::<><>::
 icon.svg::CompressedTexture2D::3882647656520711337::1700180111::1700180115::1::::<><>::
-main.tscn::PackedScene::7094164997840951674::1700436104::0::1::::<><>::res://TypstEdit.gd
+main.tscn::PackedScene::7094164997840951674::1700438199::0::1::::<><>::uid://b0n871ypvlc0t::::res://sarasa-mono-cl-regular.ttf<>res://TypstEdit.gd
 placeholder.png::CompressedTexture2D::6493460687476967615::1700307867::1700307883::1::::<><>::
+rust.gdextension::GDExtension::-1::1700291059::0::1::::<><>::
 sarasa-mono-cl-regular.ttf::FontFile::4170040895005377397::1699709403::1700437996::1::::<><>::
 TypstEdit.gd::GDScript::-1::1700436090::0::1::::<>CodeEdit<>::
-rust.gdextension::GDExtension::-1::1700291059::0::1::::<><>::
 ::res://rust/::1700428982
 Cargo.toml::TextFile::-1::1700290870::0::1::::<><>::
 ::res://rust/src/::1700290702
