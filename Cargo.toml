@@ -11,8 +11,7 @@ name = "godot_typst"
 crate-type = ["lib"]
 
 [dependencies]
-# godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api"] }
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api", "custom-godot"] }
+godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-godot-api"] }
 image = "0.24.7"
 resvg = "0.36.0"
 tempfile = "3.8.1"
