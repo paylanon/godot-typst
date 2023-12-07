@@ -11,7 +11,7 @@
 ## ABOUT
 A robust $\TeX$ alternative, directly in your Godot application.
 
-Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX). Works similarly by providing a custom ``Typst`` Sprite2D node that renders Typst expressions, continually updated at runtime.
+Inspired by [GodoTeX](https://github.com/file-acomplaint/GodoTeX). Works similarly by providing custom ```TextureRect``` and ```Sprite2D``` nodes that renders Typst expressions, continually updated at runtime.
 
 ![godot-typst](https://github.com/PAYLHORSE-Software/godot-typst/assets/74363924/a1a0af08-8725-4c7d-8a80-f3adc60fd132)
 
@@ -26,10 +26,11 @@ $ typst --version
 [dependencies]
 godot-typst = { git = "https://github.com/PAYLHORSE-Software/godot-typst" }
 ```
-#### (3) Import the Typst class to automatically add it to Godot. Ignore warning. In ``lib.rs``:
+#### (3) Import the TypstTextureRect and TypstSprite classes to automatically add them to Godot. Ignore warning. In ``lib.rs``:
 
 ```rs
-use godot_typst::Typst;
+use godot_typst::TypstTextureRect;
+use godot_typst::TypstSprite;
 ```
 
 **Done!**
