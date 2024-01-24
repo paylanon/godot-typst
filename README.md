@@ -26,7 +26,9 @@ $ typst --version
 [dependencies]
 godot-typst = { git = "https://github.com/PAYLHORSE-Software/godot-typst" }
 ```
-#### (3) Import the TypstTextureRect and TypstSprite classes to automatically add them to Godot. Ignore warning. In ``lib.rs``:
+#### (3) Import the TypstTextureRect and TypstSprite classes to automatically add them to Godot. Ignore warning. 
+
+In ``lib.rs``:
 
 ```rs
 use godot_typst::TypstTextureRect;
